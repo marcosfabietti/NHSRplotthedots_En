@@ -43,7 +43,7 @@ ptd_create_plotly <- function(x,
                               x_axis_breaks = NULL,
                               y_axis_breaks = NULL,
                               icons_size = 0.15,
-                              icons_position = c("top right", "bottom right", "bottom left", "top left", "none"),
+                              icons_position = c("top right", "bottom right", "bottom left", "top left","outer","none"),
                               colours = ptd_spc_colours(),
                               theme_override = NULL,
                               break_lines = c("both", "limits", "process", "none"),
@@ -108,9 +108,9 @@ ptd_create_plotly <- function(x,
     size_x <- icons_size * 0.6
     size_y <- icons_size
 
+    if (icons_position != "outer") {
     position_y <- ifelse(grepl("top", icons_position), 1 - size_y / 2, 0.1 + size_y / 2)
     position_x <- ifelse(grepl("right", icons_position), 1 - 2 * size_x, 0)
-
     lapply(
       seq_along(icons),
       \(i) {
@@ -128,8 +128,44 @@ ptd_create_plotly <- function(x,
         )
       }
     )
+    } else{
+      position_y <- 1 - size_y / 2
+      position_x <- 1 + 0.01 * size_x
+      lapply(
+        seq_along(icons),
+        \(i) {
+          list(
+            source = icons[[i]],
+            xref = "paper",
+            yref = "paper",
+            x = position_x,  # Adjusted calculation for x coordinate
+            y = position_y + (i- 2) * size_y,  # Adjusted calculation for y coordinate
+            sizex = size_x,
+            sizey = size_y,
+            sizing = "stretch",
+            opacity = 1,
+            layer = "above"
+          )
+        }
+      )
+      }
   }
 
+  if (grepl("outer", icons_position)==FALSE){
+    plotly::layout(
+      plot,
+      hovermode = "x unified",
+      # put legend in center of x-axis
+      legend = list(
+        orientation = "h", # show entries horizontally
+        xanchor = "center", # use center of legend as anchor
+        x = 0.5,
+        y = -0.6
+      ),
+      annotations = annotations,
+      images = images
+    )
+  }else{
   plotly::layout(
     plot,
     hovermode = "x unified",
@@ -141,8 +177,9 @@ ptd_create_plotly <- function(x,
       y = -0.6
     ),
     annotations = annotations,
-    images = images
-  )
+    images = images,
+    margin = list(l = 100, r = 150, b = 100, t = 100)
+  )}
 }
 
 read_svg_as_b64 <- function(filename) {
